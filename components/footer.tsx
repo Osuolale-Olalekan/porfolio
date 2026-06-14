@@ -11,9 +11,9 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              {/* <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">OS</span>
-              </div>
+              </div> */}
               <span className="font-semibold text-foreground">Osuolale Olalekan Abayomi</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-4">
