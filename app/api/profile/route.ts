@@ -14,10 +14,41 @@ export async function GET() {
   }
 }
 
+// Had to disable this endpoint for now because of the body parsing issue in Next 14. Will re-enable once that's resolved.
+// export async function PATCH(request: NextRequest) {
+//   try {
+//     const body = await request.json()
+//     const updated = await updateProfile(body)
+//     return NextResponse.json(updated)
+//   } catch (error) {
+//     console.error("[PATCH /api/profile]", error)
+//     return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+//   }
+// }
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const updated = await updateProfile(body)
+
+    // Only pick fields you explicitly allow
+    const allowedFields = {
+      name: body.name,
+      title: body.title,
+      bio: body.bio,
+      avatar: body.avatar,
+      avatarPosition: body.avatarPosition,
+      email: body.email,
+      location: body.location,
+      socialLinks: body.socialLinks,
+      stats: body.stats,
+    }
+
+    // Strip out undefined fields
+    const sanitized = Object.fromEntries(
+      Object.entries(allowedFields).filter(([_, v]) => v !== undefined)
+    )
+
+    const updated = await updateProfile(sanitized)
     return NextResponse.json(updated)
   } catch (error) {
     console.error("[PATCH /api/profile]", error)

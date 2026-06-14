@@ -1,24 +1,44 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { usePortfolio } from "@/lib/portfolio-context"
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X, Code2, Palette } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useProfile } from "@/lib/hooks/useprofile"
 
 export function Header() {
   const { activePortfolio, setActivePortfolio } = usePortfolio()
   const { resolvedTheme, setTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  
+  const headerRef = useRef<HTMLDivElement>(null)
+
+  const profile = useProfile()
+
+  const initials = profile?.name
+  ? profile.name.split(" ").map((n) => n[0]).join("").slice(1, 3).toUpperCase()
+  : "OA" // fallback while loading
+
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+  const handleClickOutside = (e: MouseEvent) => {
+    if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+      setMobileMenuOpen(false)
+    }
+  }
+  document.addEventListener("mousedown", handleClickOutside)
+  return () => document.removeEventListener("mousedown", handleClickOutside)
+}, [])
 
   const navItems = [
     { href: "#about", label: "About" },
@@ -33,23 +53,29 @@ export function Header() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled
-          ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm"
-          : "bg-transparent"
-      )}
+  "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+  scrolled || mobileMenuOpen
+    ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm"
+    : "bg-transparent"
+)}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
-              <span className="text-primary-foreground font-bold text-lg">OS</span>
+              {/* <span className="text-primary-foreground font-bold text-lg">OA</span> */}
+              <span className="text-primary-foreground font-bold text-lg">{initials}</span>
+
             </div>
-            <span className="hidden sm:block font-semibold text-foreground">
-              Osuolale Olalekan Abayomi
-            </span>
+            {/* <span className="hidden sm:block font-semibold text-foreground">
+              Olalekan Abayomi
+            </span> */}
+             <span className="hidden sm:block font-semibold text-foreground">
+    {profile?.name ?? "Olalekan Abayomi"}
+  </span>
           </Link>
 
           {/* Desktop Navigation */}

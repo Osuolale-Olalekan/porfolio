@@ -5,6 +5,11 @@ export interface IProfile extends Document {
   title: string
   bio: string
   avatar: string
+  avatarPosition: {
+    x: number
+    y: number
+    scale: number
+  }
   email: string
   location: string
   socialLinks: {
@@ -42,6 +47,11 @@ const ProfileSchema = new Schema<IProfile>(
     avatar: {
       type: String,
       default: "",
+    },
+    avatarPosition: {
+      x: { type: Number, default: 50 },
+      y: { type: Number, default: 50 },
+      scale: { type: Number, default: 1 },
     },
     email: {
       type: String,

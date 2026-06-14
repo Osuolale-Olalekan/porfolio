@@ -5,6 +5,7 @@ export interface ISkill extends Document {
   category: string
   proficiency: number
   portfolioType: "developer" | "artist" | "both"
+  icon: string
 }
 
 const SkillSchema = new Schema<ISkill>(
@@ -29,6 +30,10 @@ const SkillSchema = new Schema<ISkill>(
       type: String,
       enum: ["developer", "artist", "both"],
       required: [true, "Portfolio type is required"],
+    },
+    icon: {
+      type: String,
+      default: "",
     },
   },
   {

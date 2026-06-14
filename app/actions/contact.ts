@@ -1,56 +1,86 @@
-"use server"
+"use server";
 
-import { z } from "zod"
+import { Resend } from "resend";
+import { z } from "zod";
 
-const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  projectType: z.string().optional(),
   message: z.string().min(10, "Message must be at least 10 characters"),
-  projectType: z.enum(["development", "illustration", "both", "other"]).optional(),
-})
-
-export type ContactFormData = z.infer<typeof contactSchema>
+});
 
 export type ContactFormState = {
-  success: boolean
-  message: string
+  success: boolean;
+  message: string;
   errors?: {
-    name?: string[]
-    email?: string[]
-    message?: string[]
-    projectType?: string[]
-  }
-}
+    name?: string[];
+    email?: string[];
+    message?: string[];
+  };
+};
 
 export async function submitContactForm(
   prevState: ContactFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ContactFormState> {
-  const rawFormData = {
+  const parsed = schema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    projectType: formData.get("projectType"),
     message: formData.get("message"),
-    projectType: formData.get("projectType") || undefined,
-  }
+  });
 
-  const validatedFields = contactSchema.safeParse(rawFormData)
-
-  if (!validatedFields.success) {
+  if (!parsed.success) {
     return {
       success: false,
       message: "Please fix the errors below.",
-      errors: validatedFields.error.flatten().fieldErrors,
-    }
+      errors: parsed.error.flatten().fieldErrors,
+    };
   }
 
-  // Simulate sending email or storing in database
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  const { name, email, projectType, message } = parsed.data;
 
-  // In a real app, you would send an email or store in database here
-  console.log("Contact form submitted:", validatedFields.data)
+  console.log("EMAIL_TO:", process.env.EMAIL_TO);
 
-  return {
-    success: true,
-    message: "Thank you for your message! I'll get back to you soon.",
+  try {
+    const result = await resend.emails.send({
+      from: "Portfolio Contact <onboarding@resend.dev>",
+      to: process.env.EMAIL_TO!,
+      replyTo: email,
+      subject: `New message from ${name} — ${projectType ?? "General"}`,
+      html: `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Project Type:</strong> ${projectType ?? "Not specified"}</p>
+        <hr />
+        <p><strong>Message:</strong></p>
+        <p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>
+      `,
+    });
+
+    console.log("Resend result:", result);
+
+    return {
+      success: true,
+      message: "Thanks! I'll get back to you within 24 hours.",
+    };
+  } catch (error) {
+    console.error("Email error:", error);
+    return {
+      success: false,
+      message: "Something went wrong. Please try again later.",
+    };
   }
 }

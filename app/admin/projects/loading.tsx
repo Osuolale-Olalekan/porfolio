@@ -1,3 +1,2 @@
-export default function Loading() {
-  return null
-}
+import PageLoader from "@/components/PageLoader"
+export default PageLoader
